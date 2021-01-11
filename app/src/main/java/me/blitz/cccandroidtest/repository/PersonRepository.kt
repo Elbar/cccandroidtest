@@ -1,9 +1,15 @@
 package me.blitz.cccandroidtest.repository
 
+import android.annotation.SuppressLint
+import android.util.Log
+import io.reactivex.Flowable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
+import me.blitz.cccandroidtest.TAG
 import me.blitz.cccandroidtest.db.AppDatabase
 import me.blitz.cccandroidtest.model.Person
 
-class PersonRepository(appDatabase: AppDatabase) {
+class PersonRepository(val appDatabase: AppDatabase) {
 
     init {
         val person = Person(
@@ -13,6 +19,19 @@ class PersonRepository(appDatabase: AppDatabase) {
             "joseph.sham@fake.fake",
             "123-456-7890"
         )
-        appDatabase.personDao().insert(person)
+        insert(person)
     }
+
+    @SuppressLint("CheckResult")
+    fun insert(person: Person) {
+        appDatabase.personDao().insert(person)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { Log.d(TAG, "Insert person success") },
+                { Log.d(TAG, "Insert person error") }
+            )
+    }
+
+    fun getPerson(): Flowable<Person> = appDatabase.personDao().getPerson()
 }
